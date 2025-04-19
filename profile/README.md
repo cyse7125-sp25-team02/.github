@@ -94,3 +94,10 @@ Applications and services run as containerized workloads within dedicated Kubern
 * `trace-processor`: Source code for the PDF trace processing microservice.
 * `streamlit-llm-interface`: (*Assumed*) Source code for the Streamlit web UI.
 * `db-backup-operator`: Source code for the Kubernetes database backup operator.
+
+## Contributors
+
+Meet the team behind this project:
+
+* **\[Karan Thakkar]**\[https://www.linkedin.com/in/thakkaran/]
+* **\[Jay Gala]**\[https://www.linkedin.com/in/jaygala25/]
