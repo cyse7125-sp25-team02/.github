@@ -92,7 +92,7 @@ Applications and services run as containerized workloads within dedicated Kubern
 * `helm-charts`: Helm charts for deploying all applications and services to GKE.
 * `api-server`: Go source code for the API server microservice.
 * `trace-processor`: Source code for the PDF trace processing microservice.
-* `streamlit-llm-interface`: (*Assumed*) Source code for the Streamlit web UI.
+* `streamlit-llm-interface`: Source code for the Streamlit web UI.
 * `db-backup-operator`: Source code for the Kubernetes database backup operator.
 
 ## Contributors
