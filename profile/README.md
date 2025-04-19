@@ -99,5 +99,5 @@ Applications and services run as containerized workloads within dedicated Kubern
 
 Meet the team behind this project:
 
-* **\[Karan Thakkar]**\[https://www.linkedin.com/in/thakkaran/]
-* **\[Jay Gala]**\[https://www.linkedin.com/in/jaygala25/]
+* **[Karan Thakkar](https://www.linkedin.com/in/thakkaran)**
+* **[Jay Gala](https://www.linkedin.com/in/jaygala25)**
