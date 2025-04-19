@@ -95,6 +95,68 @@ Applications and services run as containerized workloads within dedicated Kubern
 * `streamlit-llm-interface`: Source code for the Streamlit web UI.
 * `db-backup-operator`: Source code for the Kubernetes database backup operator.
 
+## System Architecture: PDF Processing & Vectorization
+
+This document outlines the architecture of the system designed to process PDF documents (specifically course feedback reports), extract text, generate vector embeddings, and store them for retrieval-augmented generation (RAG) applications.
+
+### Architecture Diagram
+
+![trace-processor](https://github.com/user-attachments/assets/7ab52078-4329-4d9b-93fb-e2a94abff7e9)
+
+### Workflow Overview
+
+The system follows an event-driven, asynchronous workflow orchestrated using Kafka:
+
+1.  **PDF Upload (API Server):**
+    * The process begins when a user or an automated system uploads a PDF file via an API endpoint.
+
+2.  **Message Queuing (Kafka):**
+    * Upon successful upload and storage of the PDF (presumably in a persistent store like Google Cloud Storage, although not explicitly shown linked to the API server in this diagram section), the API server publishes a message to a Kafka topic.
+    * This message contains metadata about the uploaded file, crucially including its storage path (e.g., GCS URI).
+
+3.  **Worker Consumption (Kafka Consumer):**
+    * A dedicated worker service (implemented by the provided Python script) runs as a Kafka consumer, subscribed to the topic.
+    * The worker polls the topic and consumes new messages as they arrive.
+
+4.  **PDF Fetching (Worker -> GCS):**
+    * Using the path from the Kafka message, the worker fetches the corresponding PDF file from Google Cloud Storage (GCS). *(This step is implied by the `pdf_path` variable in the code and standard practice, linking the Kafka message content to the file needed for processing).*
+
+5.  **OCR Processing (Worker -> Mistral API):**
+    * The worker sends the fetched PDF content to the Mistral AI OCR API (`mistralai.Mistral` client's `ocr.process` method in the code).
+    * Mistral performs Optical Character Recognition (OCR) and returns the extracted text content structured as Markdown.
+
+6.  **Text Chunking (Worker):**
+    * The worker processes the returned Markdown text using the `chunk_feedback_by_qa` function.
+    * This function implements a custom logic to parse the Markdown, identify question-answer pairs within the course feedback, clean the text (removing noise like special characters), and split it into meaningful semantic chunks. Each chunk typically represents a single piece of feedback related to a specific question.
+
+7.  **Embedding Generation (Worker -> Vertex AI):**
+    * For each text chunk, the worker formats the text along with relevant metadata (course name, instructor, question, etc.) using `create_text_for_embedding`.
+    * It then calls the Google Cloud Vertex AI Text Embedding API (`TextEmbeddingModel` in the code, specifically `text-embedding-004`) to generate a high-dimensional vector embedding for each chunk. These embeddings capture the semantic meaning of the text.
+
+8.  **Vector Storage (Worker -> Pinecone):**
+    * Finally, the worker takes the generated embeddings, along with the original text and metadata for each chunk, and upserts them into a Pinecone vector database index (`store_chunks_in_pinecone` function).
+    * Each record in Pinecone contains the unique chunk ID, the vector embedding, and the associated metadata, making the processed feedback searchable based on semantic similarity.
+
+### Key Components
+
+* **API Server:** Handles incoming PDF uploads and initiates the processing pipeline by publishing to Kafka.
+* **Google Cloud Storage (GCS):** Stores the raw PDF files.
+* **Kafka:** Acts as a message broker, decoupling the upload process from the intensive processing work and enabling asynchronous operation.
+* **Worker (Python Application):** The core processing engine. It consumes messages, interacts with external APIs (Mistral, Vertex AI), performs text manipulation (chunking), and stores results (Pinecone). Likely runs in a containerized environment (e.g., GKE, Cloud Run).
+* **Mistral AI API:** Provides OCR capabilities to extract text from PDF documents.
+* **Vertex AI Embedding API:** Generates semantic vector embeddings from text chunks.
+* **Pinecone:** A managed vector database used to store and index the embeddings for efficient similarity search in downstream RAG applications.
+
+### Technology Stack
+
+* **Programming Language:** Python 3
+* **Messaging:** Apache Kafka
+* **Cloud Storage:** Google Cloud Storage (GCS)
+* **OCR:** Mistral AI API
+* **Embeddings:** Google Cloud Vertex AI (Text Embedding Model)
+* **Vector Database:** Pinecone
+* **Libraries:** `google-cloud-aiplatform`, `vertexai`, `mistralai`, `pinecone-client`, `python-dotenv` (implied for API keys), `tqdm`.
+
 ## Contributors
 
 Meet the team behind this project:
