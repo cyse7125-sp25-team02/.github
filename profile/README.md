@@ -157,6 +157,65 @@ The system follows an event-driven, asynchronous workflow orchestrated using Kaf
 * **Vector Database:** Pinecone
 * **Libraries:** `google-cloud-aiplatform`, `vertexai`, `mistralai`, `pinecone-client`, `python-dotenv` (implied for API keys), `tqdm`.
 
+## System Architecture: LLM RAG Streamlit Application
+
+This document describes the architecture of the Streamlit application designed for querying course feedback using a Retrieval-Augmented Generation (RAG) approach powered by Google Gemini, Vertex AI, and Pinecone.
+
+### Architecture Diagram
+
+![LLM-RAG-Streamlit](https://github.com/user-attachments/assets/60d35b7e-cb02-43b8-b0de-ad7b52fa2146)
+
+### Workflow Overview
+
+The application provides a chat interface where users can ask questions about course feedback. The backend leverages a RAG pipeline to generate informed answers:
+
+1.  **User Query Input (Streamlit UI):**
+    * The user enters their query (e.g., "How was the instructor for CSYE6225?") into the Streamlit chat interface.
+
+2.  **Intent Check (Streamlit UI):**
+    * The application first checks if the input is a simple greeting (e.g., "hello", "thanks"). If so, it provides a canned response and skips the RAG pipeline.
+
+3.  **Query Embedding (Streamlit -> Vertex AI):**
+    * If the query is not a simple greeting, the Streamlit backend sends the user's query text to the Google Cloud Vertex AI Text Embedding API (`text-embedding-004` model via the `get_query_embedding` function).
+    * Vertex AI computes a vector embedding representing the semantic meaning of the query.
+
+4.  **Vector Search (Streamlit -> Pinecone):**
+    * The Streamlit backend takes the generated query embedding and performs a vector similarity search against the pre-populated Pinecone index (`query_pinecone` function).
+    * This search retrieves the `TOP_K` feedback chunks from the database whose embeddings are most similar to the query embedding.
+
+5.  **Context Retrieval & Filtering (Pinecone -> Streamlit):**
+    * Pinecone returns the most relevant feedback chunks (including their text content and metadata) to the Streamlit application.
+    * The application checks if the similarity score of the top match meets a predefined `SIMILARITY_THRESHOLD`. If not, the retrieved context is discarded to avoid using irrelevant information.
+
+6.  **Context Formatting & Prompt Construction (Streamlit):**
+    * If relevant context is retrieved (and passes the threshold), the Streamlit backend formats these feedback snippets into a structured context string (`format_context` function).
+    * It then constructs a detailed prompt containing the original user query and the formatted context, along with instructions for the LLM on how to generate the answer.
+
+7.  **Answer Generation (Streamlit -> Gemini LLM):**
+    * This complete prompt is sent to the Google Gemini LLM (`gemini-1.0-pro` model via the `generate_answer_with_gemini` function).
+    * Gemini analyzes the query and the provided context snippets to synthesize a coherent answer based *only* on the retrieved feedback.
+
+8.  **Display Answer (Gemini LLM -> Streamlit -> User):**
+    * The generated answer text is returned from Gemini to the Streamlit backend.
+    * Streamlit displays the final answer in the chat interface for the user. Optionally, the retrieved context snippets can be viewed in an expander.
+
+### Key Components
+
+* **User:** Interacts with the application via the chat interface.
+* **Streamlit UI (Frontend):** Provides the web-based chat interface, handles user input/output, and orchestrates the calls to backend services. The Python script (`app.py`) contains this logic.
+* **Vertex AI Embedding Service (Backend):** Generates vector embeddings for user queries.
+* **Pinecone (Backend):** A managed vector database storing pre-computed embeddings of course feedback chunks. Used for efficient similarity search.
+* **Google Gemini (LLM Backend):** A large language model used to understand the prompt (query + context) and generate a natural language answer.
+
+### Technology Stack
+
+* **Web Framework:** Streamlit
+* **Programming Language:** Python 3
+* **Embeddings:** Google Cloud Vertex AI (`text-embedding-004`)
+* **Vector Database:** Pinecone
+* **LLM:** Google Gemini (`gemini-1.0-pro`)
+* **Libraries:** `streamlit`, `google-cloud-aiplatform`, `vertexai`, `pinecone-client`, `google-generativeai`, `python-dotenv`.
+
 ## Contributors
 
 Meet the team behind this project:
