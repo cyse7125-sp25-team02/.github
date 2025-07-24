@@ -8,7 +8,8 @@ This repository contains the infrastructure and application code for a comprehen
 
 ## Architecture Diagram
 
-<img width="1110" height="665" alt="Screenshot 2025-07-07 at 7 10 44 PM" src="https://github.com/user-attachments/assets/22c05421-7f1b-4654-8dde-625b7b465214" />
+<img width="691" height="414" alt="Screenshot 2025-07-24 at 6 20 30 PM" src="https://github.com/user-attachments/assets/9fc5847f-5158-4ab4-861b-99f43f84302b" />
+
 
 <img width="2933" height="1184" alt="diagram-export-07-07-2025-19_35_50 (1)" src="https://github.com/user-attachments/assets/3cd1ab61-6884-411c-b44f-5ece4f59531e" />
 
